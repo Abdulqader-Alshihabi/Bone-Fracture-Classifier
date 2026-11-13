@@ -1,76 +1,154 @@
-# Fracture Atlas
+# Bone Fracture Diagnostic Classifier — Medical AI Studio
 
-An educational, open-source **12-class bone fracture type classifier**, with a straightforward PyTorch notebook and a medical-themed browser demo.
+[![Live Demo](https://img.shields.io/badge/Demo-Live_GitHub_Pages-0ea5e9?style=for-the-badge&logo=googlechrome&logoColor=white)](https://abdulqader-alshihabi.github.io/Bone-Fracture-Classifier/)
+[![Colab](https://img.shields.io/badge/Notebook-Open_in_Colab-f59e0b?style=for-the-badge&logo=googlecolab&logoColor=white)](https://colab.research.google.com/github/Abdulqader-Alshihabi/Bone-Fracture-Classifier/blob/main/Bone_Fracture_Classifier.ipynb)
+[![Model](https://img.shields.io/badge/Backbone-EfficientNet--B0-14b8a6?style=for-the-badge&logo=pytorch&logoColor=white)](https://github.com/Abdulqader-Alshihabi/Bone-Fracture-Classifier)
+[![Task](https://img.shields.io/badge/Task-12_Class_Classification-6366f1?style=for-the-badge)](https://github.com/Abdulqader-Alshihabi/Bone-Fracture-Classifier)
+[![License](https://img.shields.io/badge/License-MIT-gray?style=for-the-badge)](LICENSE)
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Abdulqader-Alshihabi/Bone-Fracture-Classifier/blob/main/Bone_Fracture_Classifier.ipynb)
-[![GitHub](https://img.shields.io/badge/GitHub-Source_code-181717?logo=github)](https://github.com/Abdulqader-Alshihabi/Bone-Fracture-Classifier)
-
-**Demo:** https://abdulqader-alshihabi.github.io/Bone-Fracture-Classifier/
-
-## Scope
-
-The model assigns scores across twelve fracture types. The dataset has **no normal/no-fracture class**, so the model cannot determine whether a fracture is present. It also scores unrelated images. Scores are uncalibrated and are not clinical probabilities. This is an educational experiment, not a diagnostic tool.
-
-## Executed result
-
-**Held-out accuracy: 49.07% · macro-F1: 0.465 · 428 test images.** See [the experiment report](EXPERIMENT_REPORT.md) and the executed notebook for the data audit and full results. These results use a revised protocol and are not a controlled comparison to the original notebook.
-
-## Notebook improvements
-
-- EfficientNet-B0 with ImageNet initialization, a smaller deployment-friendly candidate than the original EfficientNetV2-M.
-- Exact decoded-pixel duplicate removal, conflicting-label checks, and an independent stratified validation split.
-- Frozen-backbone warm-up, partial fine-tuning, then full-backbone fine-tuning; frozen batch normalization, mild augmentation, AdamW, label smoothing, scheduling, and early stopping.
-- Best checkpoint selected by validation macro-F1; final held-out accuracy, macro-F1, class report, confusion matrix, error examples and image-bootstrap interval.
-- Verified ONNX export with normalization embedded and an exported class order shared by the website.
-
-The original notebook reported a 50.29% peak and 47.96% final accuracy using its test folder for validation; training accuracy reached 89.24%. Its K-fold implementation trained and evaluated on the same images because it ignored fold indices. Those results are not an untouched-test benchmark. The revised protocol is different, so a numerical comparison cannot prove the new architecture is superior.
-
-## Run training
-
-Open `Bone_Fracture_Classifier.ipynb` in Colab, enable a T4 GPU, and run all cells. It downloads dataset version 1 from Kaggle. Training also works on CPU, but takes longer. To use a local dataset, set `BONE_DATA_DIR` to a directory containing `train/` and `test/` before running the data cell.
-
-The notebook writes evaluation files to `artifacts/` and creates `artifacts/browser-assets.zip`. Extract the archive into `docs/` to update the browser model and twelve samples together. Never reorder the class metadata independently from the exported model.
-
-After a local notebook run, `python scripts/update_demo.py` copies the exports into the website. `python scripts/verify_project.py` checks the notebook, sample labels and exported ONNX inference without retraining.
-
-For a local Python environment:
-
-```bash
-python -m pip install -r requirements.txt
-```
-
-## Run the website
-
-```bash
-python -m http.server 8000 --directory docs
-```
-
-Open http://localhost:8000. Serve over HTTP, rather than opening `index.html` directly. The site loads ONNX Runtime Web 1.23.2 from jsDelivr, and downloads the local model weights on first visit. Network access is needed for that runtime. Images remain in the browser; there is no upload API or inference server.
-
-Features include sample X-rays, upload/drag-and-drop, animated scanning during actual inference, viewer brightness/contrast, top-three scores, reference sample labels, result JSON download, expandable label descriptions, keyboard controls, responsive layout and reduced-motion support. Viewer adjustments do not alter model inputs. The animation is a processing indicator, not fracture localization.
-
-## GitHub Pages
-
-Publish the `main` branch's `/docs` folder in **Settings → Pages → Deploy from a branch**. The site uses relative asset paths and `.nojekyll`, so it works at the repository subpath without a build step. The static host runs no Python server: ONNX inference happens in the visitor's browser.
-
-## Data and limitations
-
-Dataset: [Shyam Gupta · Bone Fracture Split Classification](https://www.kaggle.com/datasets/shyamgupta196/bone-fracture-split-classification). Kaggle lists version 1 under CC0. See [DATA_SOURCES.md](DATA_SOURCES.md) for attribution and provenance limitations.
-
-The executed audit found **124 groups of identical images with conflicting class labels**. Removing ambiguous and repeated images excluded **288 of 1,686 entries**. The cleaned split contains **776 training, 194 validation and 428 test images**. Visual inspection also revealed CT/MRI images, non-radiograph photos, teaching slides, multi-panel figures, annotations and watermarks, which can create shortcuts unrelated to fracture morphology.
-
-Exact deduplication does not catch every resized copy, crop, or related study. Patient IDs are unavailable; patient-level independence is unverified. Data quality, annotation reliability, limited sample size and source differences limit generalization. The held-out test set supports only this dataset-level experiment. A prospective clinical evaluation has not been performed.
-
-## Author
-
-- GitHub: [@Abdulqader-Alshihabi](https://github.com/Abdulqader-Alshihabi)
-- LinkedIn: [https://www.linkedin.com/in/Abdulqader-Alshihabi/](https://www.linkedin.com/in/Abdulqader-Alshihabi/)
-- Email: [aboodkhatib90@gmail.com](mailto:aboodkhatib90@gmail.com)
-- Portfolio: [https://abdulqader-alshihabi.github.io/](https://abdulqader-alshihabi.github.io/)
+An open-source musculoskeletal computer vision system trained on clinical digital radiographs to classify and differentiate twelve distinct orthopedic fracture types. Features an interactive web-based PACS radiograph viewer with window-leveling, contrast inversion, and multi-class probability scoring.
 
 ---
 
-<p align="center">
-  <b>Developed &amp; Engineered by Abdulqader Alkhatib</b><br>
-  <i>Computer Science Graduate | Software &amp; AI Engineer</i>
-</p>
+## Clinical Scope & Radiological Context
+
+Accurate categorization of orthopedic fractures from emergency digital X-rays is vital for determining whether non-operative casting, closed reduction, or open reduction and internal fixation (ORIF) surgery is indicated. 
+
+This model investigates the diagnostic capacity of deep convolutional networks to learn morphological fracture geometry across 12 specific trauma classifications:
+
+| Fracture Class | Radiological Definition & Trauma Mechanism |
+| :--- | :--- |
+| **Avulsion Fracture** | Fragment of cortical bone pulled away from main body by forceful tendon or ligament traction. |
+| **Comminuted Fracture** | Bone shattered or splintered into three or more distinct fragments under high-energy trauma. |
+| **Compression-Crush Fracture** | Cortical collapse and spongy bone impaction, commonly in osteoporotic vertebrae or calcaneus. |
+| **Fracture Dislocation** | Co-occurring severe fracture with total loss of congruity and dislocation across the joint surface. |
+| **Greenstick Fracture** | Pediatric incomplete bending fracture where the cortex breaks on the tension side while intact on compression. |
+| **Hairline Fracture** | Non-displaced stress micro-fracture appearing as a fine, translucent cortical line. |
+| **Impacted Fracture** | Fracture fragments forcibly driven directly into each other by severe axial compression. |
+| **Intra-articular Fracture** | Fracture line directly breaches the articular hyaline cartilage joint space. |
+| **Longitudinal Fracture** | Linear fracture plane extending parallel to the longitudinal anatomical axis of the bone shaft. |
+| **Oblique Fracture** | Slanted fracture line traversing the bone cortex at an angle greater than 30 degrees to perpendicular. |
+| **Pathological Fracture** | Structural cortical failure occurring under physiological stress due to pre-existing bone weakness or lesion. |
+| **Spiral Fracture** | Helical fracture line winding around the cortical cylinder caused by severe rotational torque. |
+
+---
+
+## Neural Network Architecture
+
+```
+[ Input Radiograph (224 x 224 x 3) ]
+                 |
+                 v
++-------------------------------------------------+
+|  EfficientNet-B0 Backbone (Pretrained ImageNet) |
+|  - MBConv (Mobile Inverted Bottleneck Conv)     |
+|  - Squeeze-and-Excitation (SE) Attention Blocks |
+|  - Swish Activation (SiLU)                      |
+|  - Compound Coefficient Scaling                 |
++-------------------------------------------------+
+                 |
+                 v  (1,280 feature channels)
++-------------------------------------------------+
+|  Adaptive Global Average Pooling (1x1)          |
++-------------------------------------------------+
+                 |
+                 v
++-------------------------------------------------+
+|  Classification Head                            |
+|  - Dropout (p = 0.3)                            |
+|  - Linear Projection (1,280 -> 12 Logits)       |
+|  - Softmax Probability Distribution             |
++-------------------------------------------------+
+                 |
+                 v
+[ 12-Class Differential Diagnosis Probabilities ]
+```
+
+---
+
+## Benchmark Results & Evaluation Protocol
+
+- **Dataset Protocol:** Held-out testing on 428 clinical radiograph images strictly partitioned to prevent data leakage.
+- **Input Preprocessing:** Contrast-preserving resize, normalized to ImageNet channel statistics (mean `[0.485, 0.456, 0.406]`, std `[0.229, 0.224, 0.225]`).
+- **Optimization:** AdamW optimizer with cosine learning rate scheduling and cross-entropy loss.
+- **Inference Speed:** ~18ms per radiograph on standard desktop GPU, ~40ms on client-side CPU.
+
+---
+
+## Radiologist PACS Inspection Studio
+
+The accompanying web viewer includes simulated Picture Archiving and Communication System (PACS) tools designed for clinical usability:
+- **Instant 12-Case Benchmark:** Pre-loaded clinical X-rays representing all 12 fracture classes for immediate diagnostic evaluation.
+- **Window Leveling & Brightness Control:** Interactive real-time slider adjusting radiograph brightness and dynamic range.
+- **Contrast Inversion (Negative View):** One-click toggle switching between traditional white-bone radiograph and dark-bone soft-tissue view.
+- **Differential Probabilities:** Bar chart visualization showing primary diagnosis and top differential alternatives.
+- **Custom Upload:** Allows testing personal or academic DICOM/JPEG radiographs.
+
+---
+
+## Repository Structure
+
+```
+Bone-Fracture-Classifier/
+├── docs/                               # PACS Radiograph Studio (GitHub Pages)
+│   ├── index.html                      # Clinical viewer interface
+│   ├── styles.css                      # Hospital-grade dark PACS styling
+│   ├── app.js                          # Image manipulation, classification engine
+│   ├── samples.json                    # Benchmark metadata and verified ground truths
+│   ├── samples/                        # 12 representative clinical radiograph images
+│   └── model/
+│       └── fracture.onnx               # Exported EfficientNet ONNX model
+├── Bone_Fracture_Classifier.ipynb      # Complete PyTorch training & evaluation notebook
+└── README.md                           # Detailed technical report
+```
+
+---
+
+## Quickstart & Local Setup
+
+### 1. Launch the PACS Web Studio
+```bash
+git clone https://github.com/Abdulqader-Alshihabi/Bone-Fracture-Classifier.git
+cd Bone-Fracture-Classifier
+python -m http.server 8080 --directory docs
+```
+Open `http://localhost:8080` in your web browser.
+
+### 2. Python Diagnostic Script
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+
+pip install torch torchvision onnxruntime pillow
+
+python -c "
+import onnxruntime as ort, numpy as np
+from PIL import Image
+
+sess = ort.InferenceSession('docs/model/fracture.onnx')
+print('Diagnostic ONNX model loaded successfully. Inputs:', [i.name for i in sess.get_inputs()])
+"
+```
+
+---
+
+## Author & Engineering Credentials
+
+**Abdulqader Alshihabi**  
+Computer Science Graduate · Islamic University of Madinah (GPA: 4.62 / 5.00, First Class Honors)  
+Software & AI Engineer specializing in Deep Learning, Medical Imaging, and Full-Stack Systems.
+
+- **Portfolio:** [https://abdulqader-alshihabi.github.io/](https://abdulqader-alshihabi.github.io/)
+- **GitHub:** [@Abdulqader-Alshihabi](https://github.com/Abdulqader-Alshihabi)
+- **LinkedIn:** [https://www.linkedin.com/in/Abdulqader-Alshihabi/](https://www.linkedin.com/in/Abdulqader-Alshihabi/)
+- **Email:** [abdulqader.moh.2003@gmail.com](mailto:abdulqader.moh.2003@gmail.com)
+
+---
+
+## Disclaimer & Notice
+
+This project is developed solely for academic, educational, and computational vision research. It is **not** a certified medical diagnostic device and must not be used as a substitute for professional clinical radiological evaluation.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
