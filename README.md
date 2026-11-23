@@ -1,154 +1,100 @@
-# Bone Fracture Diagnostic Classifier — Medical AI Studio
+<div align="center">
 
-[![Live Demo](https://img.shields.io/badge/Demo-Live_GitHub_Pages-0ea5e9?style=for-the-badge&logo=googlechrome&logoColor=white)](https://abdulqader-alshihabi.github.io/Bone-Fracture-Classifier/)
-[![Colab](https://img.shields.io/badge/Notebook-Open_in_Colab-f59e0b?style=for-the-badge&logo=googlecolab&logoColor=white)](https://colab.research.google.com/github/Abdulqader-Alshihabi/Bone-Fracture-Classifier/blob/main/Bone_Fracture_Classifier.ipynb)
-[![Model](https://img.shields.io/badge/Backbone-EfficientNet--B0-14b8a6?style=for-the-badge&logo=pytorch&logoColor=white)](https://github.com/Abdulqader-Alshihabi/Bone-Fracture-Classifier)
-[![Task](https://img.shields.io/badge/Task-12_Class_Classification-6366f1?style=for-the-badge)](https://github.com/Abdulqader-Alshihabi/Bone-Fracture-Classifier)
-[![License](https://img.shields.io/badge/License-MIT-gray?style=for-the-badge)](LICENSE)
+# Bone Fracture Classifier — Leakage-Audited Medical Radiograph AI (`EfficientNet-B0` + ONNX)
 
-An open-source musculoskeletal computer vision system trained on clinical digital radiographs to classify and differentiate twelve distinct orthopedic fracture types. Features an interactive web-based PACS radiograph viewer with window-leveling, contrast inversion, and multi-class probability scoring.
+**Audited `12`-Class Musculoskeletal Fracture Classification Across `1,398` Pixel-Deduplicated Radiographs, Delivered with Embedded-Normalization `15.34 MiB` ONNX & Automated Parity Verification**
 
----
+[![Live Viewer](https://img.shields.io/badge/LIVE_VIEWER-abdulqader--alshihabi.github.io/Bone--Fracture-14B8A6?style=for-the-badge&logo=googlechrome&logoColor=white)](https://abdulqader-alshihabi.github.io/Bone-Fracture-Classifier/)
+[![Colab Notebook](https://img.shields.io/badge/COLAB-Bone_Fracture_Classifier.ipynb-F59E0B?style=for-the-badge&logo=googlecolab&logoColor=white)](https://colab.research.google.com/github/Abdulqader-Alshihabi/Bone-Fracture-Classifier/blob/main/Bone_Fracture_Classifier.ipynb)
+[![Backbone](https://img.shields.io/badge/EfficientNet--B0-4.02M_Params-0D9488?style=for-the-badge&logo=pytorch&logoColor=white)](#progressive-3-stage-training--embedded-onnx)
+[![Audit](https://img.shields.io/badge/Leakage_Audit-288_Duplicates_Purged-10B981?style=for-the-badge)](#forensic-data-leakage-audit)
 
-## Clinical Scope & Radiological Context
-
-Accurate categorization of orthopedic fractures from emergency digital X-rays is vital for determining whether non-operative casting, closed reduction, or open reduction and internal fixation (ORIF) surgery is indicated. 
-
-This model investigates the diagnostic capacity of deep convolutional networks to learn morphological fracture geometry across 12 specific trauma classifications:
-
-| Fracture Class | Radiological Definition & Trauma Mechanism |
-| :--- | :--- |
-| **Avulsion Fracture** | Fragment of cortical bone pulled away from main body by forceful tendon or ligament traction. |
-| **Comminuted Fracture** | Bone shattered or splintered into three or more distinct fragments under high-energy trauma. |
-| **Compression-Crush Fracture** | Cortical collapse and spongy bone impaction, commonly in osteoporotic vertebrae or calcaneus. |
-| **Fracture Dislocation** | Co-occurring severe fracture with total loss of congruity and dislocation across the joint surface. |
-| **Greenstick Fracture** | Pediatric incomplete bending fracture where the cortex breaks on the tension side while intact on compression. |
-| **Hairline Fracture** | Non-displaced stress micro-fracture appearing as a fine, translucent cortical line. |
-| **Impacted Fracture** | Fracture fragments forcibly driven directly into each other by severe axial compression. |
-| **Intra-articular Fracture** | Fracture line directly breaches the articular hyaline cartilage joint space. |
-| **Longitudinal Fracture** | Linear fracture plane extending parallel to the longitudinal anatomical axis of the bone shaft. |
-| **Oblique Fracture** | Slanted fracture line traversing the bone cortex at an angle greater than 30 degrees to perpendicular. |
-| **Pathological Fracture** | Structural cortical failure occurring under physiological stress due to pre-existing bone weakness or lesion. |
-| **Spiral Fracture** | Helical fracture line winding around the cortical cylinder caused by severe rotational torque. |
+[Live PACS Demo](https://abdulqader-alshihabi.github.io/Bone-Fracture-Classifier/) &nbsp;|&nbsp; [Leakage Audit](#forensic-data-leakage-audit) &nbsp;|&nbsp; [Training & ONNX](#progressive-3-stage-training--embedded-onnx) &nbsp;|&nbsp; [Clinical Metrics](#honest-held-out-evaluation-across-428-radiographs) &nbsp;|&nbsp; [Verification & Scope](#verification-gate--extension-paths)
 
 ---
 
-## Neural Network Architecture
+| Audit & Model Metric | Verified Measurement | Engineering Significance |
+| :--- | :--- | :--- |
+| **Raw -> Deduplicated X-Rays** | `1,686` -> **`1,398`** (`288` removed) | Purged **`124` conflicting-label pixel hashes** prior to modeling |
+| **Leakage-Free Data Split** | **`776` Train / `194` Val / `428` Test** | Held-out test split locked first; `80/20` stratified train/val (`SEED=42`) |
+| **Classification Taxonomy** | **`12` Fracture Morphologies** | Avulsion, Comminuted, Compression-Crush, Dislocation, Hairline, Oblique, etc. |
+| **Architecture & Footprint** | `EfficientNet-B0` (`4,022,920` params) | `fracture.onnx` (`15.34 MiB`, `opset 17`, max PyTorch/ORT diff `7.75e-7`) |
+| **Held-Out Test Accuracy** | **`49.07%`** (`95% CI: 44.39%–53.97%`) | **`0.465` Macro-F1**, **`47.41%` Balanced Acc**, `0.484` Weighted F1 (`2,000` bootstrap) |
+| **Automated QA Gate** | `scripts/verify_project.py` | Verifies DOM/JS IDs, notebook AST/outputs, `onnx.checker`, & `(1,12)` ORT run |
 
-```
-[ Input Radiograph (224 x 224 x 3) ]
-                 |
-                 v
-+-------------------------------------------------+
-|  EfficientNet-B0 Backbone (Pretrained ImageNet) |
-|  - MBConv (Mobile Inverted Bottleneck Conv)     |
-|  - Squeeze-and-Excitation (SE) Attention Blocks |
-|  - Swish Activation (SiLU)                      |
-|  - Compound Coefficient Scaling                 |
-+-------------------------------------------------+
-                 |
-                 v  (1,280 feature channels)
-+-------------------------------------------------+
-|  Adaptive Global Average Pooling (1x1)          |
-+-------------------------------------------------+
-                 |
-                 v
-+-------------------------------------------------+
-|  Classification Head                            |
-|  - Dropout (p = 0.3)                            |
-|  - Linear Projection (1,280 -> 12 Logits)       |
-|  - Softmax Probability Distribution             |
-+-------------------------------------------------+
-                 |
-                 v
-[ 12-Class Differential Diagnosis Probabilities ]
-```
+</div>
 
 ---
 
-## Benchmark Results & Evaluation Protocol
+## Project Philosophy: Why Honest Deduplicated Baselines Matter in Medical AI
 
-- **Dataset Protocol:** Held-out testing on 428 clinical radiograph images strictly partitioned to prevent data leakage.
-- **Input Preprocessing:** Contrast-preserving resize, normalized to ImageNet channel statistics (mean `[0.485, 0.456, 0.406]`, std `[0.229, 0.224, 0.225]`).
-- **Optimization:** AdamW optimizer with cosine learning rate scheduling and cross-entropy loss.
-- **Inference Speed:** ~18ms per radiograph on standard desktop GPU, ~40ms on client-side CPU.
+Public medical image benchmarks frequently harbor duplicate images across train/test splits and identical X-ray scans tagged under conflicting labels—producing artificially high validation numbers that collapse in real clinical settings. This project performs a full **forensic pixel-hash deduplication audit** before training a single weight, documents true held-out variance transparently, and ships a parity-verified ONNX model paired with an interactive PACS-inspired web viewer.
 
----
-
-## Radiologist PACS Inspection Studio
-
-The accompanying web viewer includes simulated Picture Archiving and Communication System (PACS) tools designed for clinical usability:
-- **Instant 12-Case Benchmark:** Pre-loaded clinical X-rays representing all 12 fracture classes for immediate diagnostic evaluation.
-- **Window Leveling & Brightness Control:** Interactive real-time slider adjusting radiograph brightness and dynamic range.
-- **Contrast Inversion (Negative View):** One-click toggle switching between traditional white-bone radiograph and dark-bone soft-tissue view.
-- **Differential Probabilities:** Bar chart visualization showing primary diagnosis and top differential alternatives.
-- **Custom Upload:** Allows testing personal or academic DICOM/JPEG radiographs.
+<div align="center">
+  <img src="assets/screenshots/fracturescope-ui.png" alt="FractureScope Interactive Radiograph PACS Contrast and Case Explorer" width="100%" />
+  <p><em>FractureScope PACS Viewer (`docs/index.html`, `docs/app.js`): radiograph windowing/contrast inversion controls and 12 morphological case studies.</em></p>
+</div>
 
 ---
 
-## Repository Structure
+## Forensic Data Leakage Audit
 
-```
-Bone-Fracture-Classifier/
-├── docs/                               # PACS Radiograph Studio (GitHub Pages)
-│   ├── index.html                      # Clinical viewer interface
-│   ├── styles.css                      # Hospital-grade dark PACS styling
-│   ├── app.js                          # Image manipulation, classification engine
-│   ├── samples.json                    # Benchmark metadata and verified ground truths
-│   ├── samples/                        # 12 representative clinical radiograph images
-│   └── model/
-│       └── fracture.onnx               # Exported EfficientNet ONNX model
-├── Bone_Fracture_Classifier.ipynb      # Complete PyTorch training & evaluation notebook
-└── README.md                           # Detailed technical report
-```
+Auditing Kaggle dataset `shyamgupta196/bone-fracture-split-classification` (`1,686` raw files across `12` directories) uncovered **`124` distinct pixel-identical clusters holding conflicting ground-truth labels** alongside cross-split duplicates. Every image is canonicalized with EXIF transposition to RGB (`size + rgb.tobytes()`), locked on the held-out test set first, and stripped cleanly of all `288` leaking duplicates:
+
+<div align="center">
+  <img src="assets/diagrams/diagram-1-leakage-audit.png" alt="Pixel-Hash Deduplication Removing 288 Duplicates and 124 Conflicting Label Groups" width="100%" />
+</div>
+
+- **Why Old Benchmarks Were Rejected (`artifacts/original_reported_history.csv`):** An earlier `EfficientNetV2-M` notebook reported `50.29%` validation accuracy while evaluating the `test/` directory on every epoch as its validation split—rendering it non-comparable due to split leakage. Our audited pipeline eliminates leakage completely and measures genuine out-of-sample generalization across `428` unseen test radiographs.
 
 ---
 
-## Quickstart & Local Setup
+## Progressive 3-Stage Training & Embedded ONNX
 
-### 1. Launch the PACS Web Studio
-```bash
-git clone https://github.com/Abdulqader-Alshihabi/Bone-Fracture-Classifier.git
-cd Bone-Fracture-Classifier
-python -m http.server 8080 --directory docs
-```
-Open `http://localhost:8080` in your web browser.
+To prevent catastrophic forgetting of ImageNet edge filters on only `776` training X-rays, `Bone_Fracture_Classifier.ipynb` executes a **three-stage progressive schedule** with `BatchNorm2d` stats frozen (`layer.eval()`), `CrossEntropyLoss(label_smoothing=0.1)`, `clip_grad_norm_(1.0)`, `ReduceLROnPlateau(patience=2, factor=0.5)`, and checkpoint selection strictly optimizing `val_macro_f1`:
 
-### 2. Python Diagnostic Script
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+<div align="center">
+  <img src="assets/diagrams/diagram-2-training-architecture.png" alt="Three-Stage Progressive Fine-Tuning and Embedded-Normalization ONNX Pipeline" width="100%" />
+</div>
 
-pip install torch torchvision onnxruntime pillow
+### Embedded Normalization Wrapper (`BrowserModel`)
 
-python -c "
-import onnxruntime as ort, numpy as np
-from PIL import Image
-
-sess = ort.InferenceSession('docs/model/fracture.onnx')
-print('Diagnostic ONNX model loaded successfully. Inputs:', [i.name for i in sess.get_inputs()])
-"
-```
+Notice one subtle production detail in notebook Cell 15: rather than forcing downstream consumers to normalize pixels externally (risking channel-order or `mean/std` drift), `BrowserModel(nn.Module)` registers ImageNet `mean=[0.485, 0.456, 0.406]` and `std=[0.229, 0.224, 0.225]` inside the PyTorch forward graph itself before tracing `docs/model/fracture.onnx` (`16,089,205` bytes = `15.34 MiB`, `opset_version=17`). Input tensor contract: raw `[0, 1]` RGB `[1, 3, 224, 224]` -> `(1, 12)` logits with **`7.75e-7`** max PyTorch/ORT discrepancy.
 
 ---
 
-## Author & Engineering Credentials
+## Honest Held-Out Evaluation Across `428` Radiographs
 
-**Abdulqader Alshihabi**  
-Computer Science Graduate · Islamic University of Madinah (GPA: 4.62 / 5.00, First Class Honors)  
-Software & AI Engineer specializing in Deep Learning, Medical Imaging, and Full-Stack Systems.
+All plots and tabular metrics below come verbatim from `artifacts/metrics.json`, `artifacts/classification_report.csv`, `artifacts/training_curves.png`, and `artifacts/confusion_matrix.png`:
 
-- **Portfolio:** [https://abdulqader-alshihabi.github.io/](https://abdulqader-alshihabi.github.io/)
-- **GitHub:** [@Abdulqader-Alshihabi](https://github.com/Abdulqader-Alshihabi)
-- **LinkedIn:** [https://www.linkedin.com/in/Abdulqader-Alshihabi/](https://www.linkedin.com/in/Abdulqader-Alshihabi/)
-- **Email:** [abdulqader.moh.2003@gmail.com](mailto:abdulqader.moh.2003@gmail.com)
+<div align="center">
+  <img src="assets/diagrams/diagram-3-clinical-metrics.png" alt="Honest 428-Image Held-Out Evaluation Metrics and CI Verification Gate" width="100%" />
+</div>
+
+<div align="center">
+  <img src="artifacts/training_curves.png" alt="24-Epoch Loss, Accuracy and Macro-F1 Curves Showing Stage Progression" width="96%" />
+  <p><em>24-Epoch Convergence Profile (`artifacts/training_curves.png`): Head warmup (epochs 1-5), partial unfreeze (epochs 6-14), and full trunk convergence peaking at Epoch 20 (`val_macro_f1 = 0.462`, `val_acc = 0.500`).</em></p>
+</div>
+
+<div align="center">
+  <img src="artifacts/confusion_matrix.png" alt="12x12 Recall-Normalized Confusion Matrix on 428 Held-Out Test Radiographs" width="84%" />
+  <p><em>Recall-Normalized Confusion Matrix (`artifacts/confusion_matrix.png`): strong recall on distinct structural collapses such as `Compression-Crush` (`86.1%`, `0.765 F1`) vs high visual overlap between hairline, longitudinal, and oblique fracture patterns.</em></p>
+</div>
 
 ---
 
-## Disclaimer & Notice
+## Verification Gate & Extension Paths
 
-This project is developed solely for academic, educational, and computational vision research. It is **not** a certified medical diagnostic device and must not be used as a substitute for professional clinical radiological evaluation.
+<div align="center">
+  <img src="assets/diagrams/diagram-4-clinical-seams.png" alt="Extension Seams, ONNX Parity Gate, and Non-Clinical Research Scope" width="100%" />
+</div>
 
-## License
+- **Automated Verification (`scripts/verify_project.py`):** Validates DOM element IDs between `docs/index.html` and `docs/app.js`, parses the executed notebook AST for zero errors, runs `onnx.checker.check_model`, executes a `(1, 12)` CPU `onnxruntime` parity pass, and asserts `docs/model/metadata.json` schema integrity.
+- **Browser Runtime Transparency Note:** `docs/model/fracture.onnx` (`15.34 MiB`) is exported, parity-verified, and ready for direct execution; currently `docs/app.js` provides client-side PACS image adjustments (`brightness()`, `invert(1) hue-rotate(180deg)`) paired with deterministic preview confidences and sample case studies rather than instantiating `onnxruntime-web` in-browser.
+- **Research Disclaimer:** Built exclusively for leakage-audit methodology, ONNX parity verification, and educational visualization—**not** validated or cleared for clinical triage or medical diagnosis.
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+<div align="center">
+
+[Open PACS Radiograph Explorer](https://abdulqader-alshihabi.github.io/Bone-Fracture-Classifier/) &nbsp;|&nbsp; [Portfolio](https://abdulqader-alshihabi.github.io/) &nbsp;|&nbsp; Built by **Abdulqader Alshihabi**
+
+</div>
