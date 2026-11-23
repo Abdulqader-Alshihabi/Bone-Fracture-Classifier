@@ -95,6 +95,6 @@ All plots and tabular metrics below come verbatim from `artifacts/metrics.json`,
 
 <div align="center">
 
-[Open PACS Radiograph Explorer](https://abdulqader-alshihabi.github.io/Bone-Fracture-Classifier/) &nbsp;|&nbsp; [Portfolio](https://abdulqader-alshihabi.github.io/) &nbsp;|&nbsp; Built by **Abdulqader Alshihabi**
+[Open PACS Radiograph Explorer](https://abdulqader-alshihabi.github.io/Bone-Fracture-Classifier/) &nbsp;|&nbsp; [Portfolio](https://abdulqader-alshihabi.github.io/) &nbsp;|&nbsp; [LinkedIn](https://www.linkedin.com/in/abdulqader-alshihabi-859b19260/) &nbsp;|&nbsp; Built by **Abdulqader Alshihabi**
 
 </div>
